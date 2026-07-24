@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>thinking-orbs-colored — Interactive Demo & Docs</title>
+  <meta name="description" content="Customizable 3D canvas thinking orbs with native dynamic color support for React & Vanilla JS.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ── Reset ───────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Tokens ──────────────────────────────── */
+    :root {
+      --bg:           #f4f5f7;
+      --surface:      #ffffff;
+      --surface-2:    #f8f9fb;
+      --border:       #e4e7ec;
+      --border-focus: #c7d2fe;
+      --text:         #111827;
+      --text-2:       #374151;
+      --text-muted:   #6b7280;
+      --text-light:   #9ca3af;
+      --primary:      #4f46e5;
+      --primary-lt:   rgba(79, 70, 229, 0.08);
+      --primary-ring: rgba(79, 70, 229, 0.25);
+      /* Dynamic accent — updated by JS on color change */
+      --accent:       #4f46e5;
+      --accent-lt:    rgba(79, 70, 229, 0.08);
+      --accent-ring:  rgba(79, 70, 229, 0.28);
+      --radius-sm:    8px;
+      --radius-md:    12px;
+      --radius-lg:    16px;
+      --radius-xl:    20px;
+      --shadow-sm:    0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+      --shadow-md:    0 4px 12px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
+      --shadow-lg:    0 12px 32px rgba(0,0,0,.1),  0 4px 8px rgba(0,0,0,.04);
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --mono: 'JetBrains Mono', 'Fira Code', monospace;
+      --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Layout ──────────────────────────────── */
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 56px 24px 80px;
+    }
+
+    /* ── Header ──────────────────────────────── */
+    header {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+
+    .badge-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 22px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 12px;
+      border-radius: 100px;
+      background: var(--accent-lt);
+      border: 1px solid var(--accent-ring);
+      color: var(--accent);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      transition: background 0.3s, border-color 0.3s, color 0.3s;
+      text-decoration: none;
+    }
+
+    .badge-neutral {
+      background: #f3f4f6;
+      border: 1px solid #e4e7ec;
+      color: #6b7280;
+    }
+
+    .badge-green {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      color: #16a34a;
+    }
+
+    a.badge:hover {
+      filter: brightness(0.92);
+      transform: translateY(-1px);
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 5vw, 3.2rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: var(--text);
+      margin-bottom: 14px;
+      line-height: 1.1;
+    }
+
+    h1 span {
+      color: var(--accent);
+      transition: color 0.3s;
+    }
+
+    .subtitle {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      max-width: 520px;
+      margin: 0 auto 28px;
+      line-height: 1.7;
+    }
+
+    .header-links {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* ── Buttons ─────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 18px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.18s var(--ease);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-2);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn:hover {
+      border-color: var(--accent-ring);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
+      color: var(--accent);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+      transition: background 0.3s, border-color 0.3s;
+    }
+
+    .btn-primary:hover {
+      filter: brightness(0.9);
+      color: #fff;
+    }
+
+    /* ── Cards ───────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* ── Playground ──────────────────────────── */
+    .playground {
+      display: grid;
+      grid-template-columns: 1fr 1.15fr;
+      gap: 24px;
+      margin-bottom: 48px;
+    }
+
+    @media (max-width: 820px) {
+      .playground { grid-template-columns: 1fr; }
+    }
+
+    /* Left card — preview */
+    .preview-card {
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .preview-stage {
+      flex: 1;
+      min-height: 220px;
+      background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 100%);
+      border: 1px solid #e0e7ff;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .preview-stage::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(79,70,229,0.06) 0%, transparent 65%);
+    }
+
+    .preview-orb-wrap {
+      transform: scale(1.7);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Color picker section */
+    .color-section {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .section-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text-muted);
+    }
+
+    /* Swatches row */
+    .swatches-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .swatch {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid transparent;
+      outline: 2.5px solid transparent;
+      outline-offset: 2.5px;
+      transition: transform 0.15s var(--ease), outline-color 0.2s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      flex-shrink: 0;
+    }
+
+    .swatch:hover { transform: scale(1.1); }
+    .swatch.active {
+      outline-color: var(--accent);
+      transform: scale(1.0);
+    }
+
+    /* RGB Input Row */
+    .rgb-picker-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+    }
+
+    .rgb-preview-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #4f46e5;
+      flex-shrink: 0;
+      border: 2px solid rgba(0,0,0,.08);
+      transition: background 0.2s;
+    }
+
+    .rgb-inputs {
+      display: flex;
+      gap: 6px;
+      flex: 1;
+    }
+
+    .rgb-field {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      flex: 1;
+    }
+
+    .rgb-field label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-light);
+    }
+
+    .rgb-field input[type="number"] {
+      width: 100%;
+      padding: 4px 6px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface);
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text);
+      text-align: center;
+      outline: none;
+      -moz-appearance: textfield;
+      appearance: textfield;
+      transition: border-color 0.15s;
+    }
+
+    .rgb-field input[type="number"]::-webkit-inner-spin-button,
+    .rgb-field input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+    .rgb-field input[type="number"]:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-ring);
+    }
+
+    .rgb-hex-input {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 8px;
+    }
+
+    .rgb-hex-input span {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--text-light);
+    }
+
+    .rgb-hex-input input {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text);
+      border: none;
+      outline: none;
+      background: transparent;
+      width: 62px;
+    }
+
+    /* native color wheel hidden button */
+    .color-wheel-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red);
+      cursor: pointer;
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+      transition: transform 0.15s;
+    }
+
+    .color-wheel-btn:hover { transform: scale(1.12); }
+
+    .color-wheel-btn input[type="color"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Right card — controls */
+    .controls-card {
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* Pills */
+    .pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .pill {
+      padding: 7px 14px;
+      border-radius: 7px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-family: var(--font);
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s var(--ease);
+    }
+
+    .pill:hover {
+      border-color: var(--accent-ring);
+      color: var(--accent);
+      background: var(--accent-lt);
+    }
+
+    .pill.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+      box-shadow: 0 2px 8px var(--accent-ring);
+      transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+    }
+
+    /* Code block */
+    .code-wrap {
+      position: relative;
+    }
+
+    .code-block {
+      background: #1e2130;
+      border: 1px solid #2d3148;
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      font-family: var(--mono);
+      font-size: 0.84rem;
+      line-height: 1.7;
+      color: #c8cfe8;
+      overflow-x: auto;
+      white-space: pre;
+    }
+
+    .code-block .token-tag    { color: #89b4fa; }
+    .code-block .token-attr   { color: #94e2d5; }
+    .code-block .token-string { color: #a6e3a1; }
+    .code-block .token-punct  { color: #6c7086; }
+
+    .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 5px 12px;
+      font-family: var(--font);
+      font-size: 0.76rem;
+      font-weight: 600;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 6px;
+      color: #a5b4fc;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .copy-btn:hover { background: rgba(255,255,255,0.14); }
+    .copy-btn.copied { color: #a6e3a1; }
+
+    /* ── Gallery ─────────────────────────────── */
+    .gallery-section {
+      margin-bottom: 16px;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .section-header h2 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .section-header p {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+      gap: 16px;
+    }
+
+    .gallery-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 28px 16px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease), border-color 0.2s;
+      cursor: default;
+    }
+
+    .gallery-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--accent-ring);
+    }
+
+    .gallery-card .orb-wrap {
+      transform: scale(1.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 64px;
+    }
+
+    .gallery-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-2);
+      letter-spacing: 0.01em;
+    }
+
+    /* ── Install strip ───────────────────────── */
+    .install-strip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-top: 48px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .install-strip h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .install-strip p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .install-cmd {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #1e2130;
+      border: 1px solid #2d3148;
+      border-radius: var(--radius-md);
+      padding: 12px 18px;
+      flex-wrap: wrap;
+    }
+
+    .install-cmd code {
+      font-family: var(--mono);
+      font-size: 0.875rem;
+      color: #a6e3a1;
+    }
+
+    .install-cmd .copy-npm-btn {
+      padding: 4px 10px;
+      font-family: var(--font);
+      font-size: 0.76rem;
+      font-weight: 600;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 5px;
+      color: #94e2d5;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .install-cmd .copy-npm-btn:hover { background: rgba(255,255,255,0.14); }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- Header -->
+    <header>
+      <div class="badge-row">
+        <a href="https://github.com/KEX001/thinking-orbs-colored" target="_blank" class="badge">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          KEX001 / thinking-orbs-colored
+        </a>
+        <span class="badge badge-green">✦ v1.0.0</span>
+        <span class="badge badge-neutral">MIT License</span>
+        <span class="badge badge-neutral">React + Vanilla JS</span>
+      </div>
+
+      <h1>thinking-orbs<span>-colored</span></h1>
+      <p class="subtitle">A fork of <a href="https://github.com/Jakubantalik/thinking-orbs" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:600">thinking-orbs</a> — extended with full dynamic color support. Drop-in replacement for React &amp; Vanilla JS.</p>
+
+      <div class="header-links">
+        <a href="https://github.com/KEX001/thinking-orbs-colored" target="_blank" class="btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          View on GitHub
+        </a>
+        <a href="https://github.com/Jakubantalik/thinking-orbs" target="_blank" class="btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg>
+          Original Repo
+        </a>
+        <a href="https://www.npmjs.com/package/thinking-orbs" target="_blank" class="btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M0 0v24h24V0H0zm19.2 19.2H4.8V4.8h14.4v14.4zm-9.6-2.4H12V9.6H9.6v7.2zm2.4 0h2.4V9.6H12v7.2z"/></svg>
+          npm
+        </a>
+      </div>
+    </header>
+
+    <!-- Features -->
+    <div style="margin-bottom: 48px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 24px; box-shadow: var(--shadow-sm);">
+      <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; color: var(--text);">✨ What's New in this Fork</h3>
+      <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px; color: var(--text-2); font-size: 0.95rem;">
+        <li style="display: flex; gap: 10px;"><span style="color: var(--accent);">✦</span> <b>Color Engine Injection:</b> Successfully injected a dynamic RGB color engine into the minified WebGL context to preserve orb depth and shading.</li>
+        <li style="display: flex; gap: 10px;"><span style="color: var(--accent);">✦</span> <b>Dynamic React Props:</b> The <code>color</code> prop is fully threaded through the render tree so you can switch colors at runtime without unmounting.</li>
+        <li style="display: flex; gap: 10px;"><span style="color: var(--accent);">✦</span> <b>Interactive Palette:</b> Built-in parsers let you pass any HEX string, named color, RGB, or HSL value directly to the component.</li>
+        <li style="display: flex; gap: 10px;"><span style="color: var(--accent);">✦</span> <b>Light Mode UI:</b> A clean new visual playground to test real-time color syncing.</li>
+      </ul>
+    </div>
+
+    <!-- Playground -->
+    <div class="playground">
+
+      <!-- Left: Preview + Color Picker -->
+      <div class="card preview-card">
+        <div class="preview-stage">
+          <div class="preview-orb-wrap">
+            <div id="live-orb-target"></div>
+          </div>
+        </div>
+
+        <div class="color-section">
+          <span class="section-label">Color</span>
+
+          <!-- Preset Swatches -->
+          <div class="swatches-row">
+            <div class="swatch active" style="background:#4f46e5" data-color="#4f46e5" title="Indigo"></div>
+            <div class="swatch" style="background:#7c3aed" data-color="#7c3aed" title="Violet"></div>
+            <div class="swatch" style="background:#2563eb" data-color="#2563eb" title="Blue"></div>
+            <div class="swatch" style="background:#06b6d4" data-color="#06b6d4" title="Cyan"></div>
+            <div class="swatch" style="background:#10b981" data-color="#10b981" title="Emerald"></div>
+            <div class="swatch" style="background:#f59e0b" data-color="#f59e0b" title="Amber"></div>
+            <div class="swatch" style="background:#ef4444" data-color="#ef4444" title="Red"></div>
+            <div class="swatch" style="background:#f43f5e" data-color="#f43f5e" title="Rose"></div>
+            <div class="swatch" style="background:#ec4899" data-color="#ec4899" title="Pink"></div>
+            <!-- Color wheel -->
+            <div class="color-wheel-btn" title="Custom color">
+              <input type="color" id="native-color-picker" value="#4f46e5">
+            </div>
+          </div>
+
+          <!-- RGB Input Row -->
+          <div class="rgb-picker-row">
+            <div class="rgb-preview-dot" id="rgb-dot"></div>
+            <div class="rgb-inputs">
+              <div class="rgb-field">
+                <label for="rgb-r">R</label>
+                <input type="number" id="rgb-r" min="0" max="255" value="79">
+              </div>
+              <div class="rgb-field">
+                <label for="rgb-g">G</label>
+                <input type="number" id="rgb-g" min="0" max="255" value="70">
+              </div>
+              <div class="rgb-field">
+                <label for="rgb-b">B</label>
+                <input type="number" id="rgb-b" min="0" max="255" value="229">
+              </div>
+            </div>
+            <div class="rgb-hex-input">
+              <span>#</span>
+              <input type="text" id="hex-input" value="4f46e5" maxlength="6" spellcheck="false">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Controls + Code -->
+      <div class="card controls-card">
+        <div class="control-group">
+          <span class="section-label">State (Animation Verb)</span>
+          <div class="pills" id="state-pills">
+            <button class="pill active" data-state="composing">composing</button>
+            <button class="pill" data-state="working">working</button>
+            <button class="pill" data-state="searching">searching</button>
+            <button class="pill" data-state="solving">solving</button>
+            <button class="pill" data-state="listening">listening</button>
+            <button class="pill" data-state="shaping">shaping</button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <span class="section-label">Size Preset</span>
+          <div class="pills" id="size-pills">
+            <button class="pill active" data-size="64">64 — Avatar</button>
+            <button class="pill" data-size="20">20 — Inline Text</button>
+          </div>
+        </div>
+
+        <div class="control-group" style="flex:1">
+          <span class="section-label">Generated Code</span>
+          <div class="code-wrap" style="flex:1">
+            <div class="code-block" id="code-block">
+              <span class="token-punct">&lt;</span><span class="token-tag">ThinkingOrb</span>
+  <span class="token-attr">state</span><span class="token-punct">=</span><span class="token-string">"composing"</span>
+  <span class="token-attr">size</span><span class="token-punct">={</span><span class="token-string">64</span><span class="token-punct">}</span>
+  <span class="token-attr">color</span><span class="token-punct">=</span><span class="token-string">"#4f46e5"</span>
+<span class="token-punct">/&gt;</span>
+            </div>
+            <button class="copy-btn" id="copy-btn" onclick="copyCode()">Copy</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gallery -->
+    <div class="gallery-section">
+      <div class="section-header">
+        <h2>All Animation States</h2>
+        <p>All 6 verbs rendered with your selected color in real-time</p>
+      </div>
+      <div class="gallery-grid">
+        <div class="gallery-card">
+          <div class="orb-wrap"><div id="gallery-composing"></div></div>
+          <span class="gallery-label">composing</span>
+        </div>
+        <div class="gallery-card">
+          <div class="orb-wrap"><div id="gallery-working"></div></div>
+          <span class="gallery-label">working</span>
+        </div>
+        <div class="gallery-card">
+          <div class="orb-wrap"><div id="gallery-searching"></div></div>
+          <span class="gallery-label">searching</span>
+        </div>
+        <div class="gallery-card">
+          <div class="orb-wrap"><div id="gallery-solving"></div></div>
+          <span class="gallery-label">solving</span>
+        </div>
+        <div class="gallery-card">
+          <div class="orb-wrap"><div id="gallery-listening"></div></div>
+          <span class="gallery-label">listening</span>
+        </div>
+        <div class="gallery-card">
+          <div class="orb-wrap"><div id="gallery-shaping"></div></div>
+          <span class="gallery-label">shaping</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Install strip -->
+    <div class="install-strip">
+      <div>
+        <h3>Get started in seconds</h3>
+        <p>Install via npm, then drop in any React component</p>
+      </div>
+      <div class="install-cmd">
+        <code id="npm-cmd">npm install thinking-orbs-colored</code>
+        <button class="copy-npm-btn" onclick="copyNpm()">Copy</button>
+      </div>
+    </div>
+
+  </div><!-- /container -->
+
+  <script src="dist/thinking-orb-bundle.js"></script>
+  <script>
+    /* ── State ────────────────────────────────── */
+    let currentState = 'composing';
+    let currentSize  = 64;
+    let currentColor = '#4f46e5';
+
+    /* ── Helpers ──────────────────────────────── */
+    function hexToRgb(hex) {
+      hex = hex.replace(/^#/, '');
+      if (hex.length === 3) hex = hex.split('').map(c => c+c).join('');
+      const n = parseInt(hex, 16);
+      if (isNaN(n)) return null;
+      return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+    }
+
+    function rgbToHex(r, g, b) {
+      return [r, g, b].map(v => Math.max(0, Math.min(255, v)).toString(16).padStart(2,'0')).join('');
+    }
+
+    function clamp(v) { return Math.max(0, Math.min(255, parseInt(v, 10) || 0)); }
+
+    /* ── Sync UI controls to a new color ────────── */
+    function applyColor(hex) {
+      // Normalize
+      hex = hex.replace(/^#/, '').toLowerCase();
+      if (hex.length === 3) hex = hex.split('').map(c=>c+c).join('');
+      if (!/^[0-9a-f]{6}$/.test(hex)) return;
+      currentColor = '#' + hex;
+
+      const { r, g, b } = hexToRgb(hex);
+
+      // Sync RGB inputs
+      document.getElementById('rgb-r').value = r;
+      document.getElementById('rgb-g').value = g;
+      document.getElementById('rgb-b').value = b;
+
+      // Sync hex input
+      document.getElementById('hex-input').value = hex;
+
+      // Sync color wheel
+      document.getElementById('native-color-picker').value = '#' + hex;
+
+      // Sync rgb dot
+      document.getElementById('rgb-dot').style.background = '#' + hex;
+
+      // Update dynamic accent CSS vars so UI follows selected color
+      const root = document.documentElement;
+      root.style.setProperty('--accent', currentColor);
+      root.style.setProperty('--accent-lt', `rgba(${r},${g},${b},0.09)`);
+      root.style.setProperty('--accent-ring', `rgba(${r},${g},${b},0.28)`);
+
+      // Sync swatches active state
+      document.querySelectorAll('.swatch').forEach(s => {
+        s.classList.toggle('active', s.getAttribute('data-color') === currentColor);
+      });
+
+      updatePlayground();
+    }
+
+    /* ── Render ──────────────────────────────── */
+    function updatePlayground() {
+      const theme = 'light';
+      if (window.renderThinkingOrb) {
+        window.renderThinkingOrb('live-orb-target', currentState, currentSize, theme, currentColor);
+        ['composing','working','searching','solving','listening','shaping'].forEach(state => {
+          window.renderThinkingOrb(`gallery-${state}`, state, 64, theme, currentColor);
+        });
+      }
+      updateCode();
+    }
+
+    function updateCode() {
+      document.getElementById('code-block').innerHTML =
+        `<span class="token-punct">&lt;</span><span class="token-tag">ThinkingOrb</span>\n` +
+        `  <span class="token-attr">state</span><span class="token-punct">=</span><span class="token-string">"${currentState}"</span>\n` +
+        `  <span class="token-attr">size</span><span class="token-punct">={</span><span class="token-string">${currentSize}</span><span class="token-punct">}</span>\n` +
+        `  <span class="token-attr">color</span><span class="token-punct">=</span><span class="token-string">"${currentColor}"</span>\n` +
+        `<span class="token-punct">/&gt;</span>`;
+    }
+
+    /* ── Listeners ──────────────────────────── */
+    // Swatches
+    document.querySelectorAll('.swatch').forEach(sw => {
+      sw.addEventListener('click', () => applyColor(sw.getAttribute('data-color')));
+    });
+
+    // Native color wheel
+    document.getElementById('native-color-picker').addEventListener('input', e => {
+      applyColor(e.target.value);
+    });
+
+    // RGB number inputs
+    ['rgb-r','rgb-g','rgb-b'].forEach(id => {
+      document.getElementById(id).addEventListener('input', () => {
+        const r = clamp(document.getElementById('rgb-r').value);
+        const g = clamp(document.getElementById('rgb-g').value);
+        const b = clamp(document.getElementById('rgb-b').value);
+        applyColor(rgbToHex(r,g,b));
+      });
+    });
+
+    // Hex text input
+    document.getElementById('hex-input').addEventListener('input', e => {
+      const v = e.target.value.replace(/[^0-9a-fA-F]/g,'');
+      e.target.value = v;
+      if (v.length === 6) applyColor(v);
+    });
+
+    // State pills
+    document.querySelectorAll('#state-pills .pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#state-pills .pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentState = btn.getAttribute('data-state');
+        updatePlayground();
+      });
+    });
+
+    // Size pills
+    document.querySelectorAll('#size-pills .pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#size-pills .pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentSize = parseInt(btn.getAttribute('data-size'), 10);
+        updatePlayground();
+      });
+    });
+
+    /* ── Copy helpers ────────────────────────── */
+    function copyCode() {
+      const lines = [
+        `<ThinkingOrb`,
+        `  state="${currentState}"`,
+        `  size={${currentSize}}`,
+        `  color="${currentColor}"`,
+        `/>`
+      ].join('\n');
+      navigator.clipboard.writeText(lines).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
+      });
+    }
+
+    function copyNpm() {
+      navigator.clipboard.writeText('npm install thinking-orbs-colored');
+    }
+
+    /* ── Init ────────────────────────────────── */
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(updatePlayground, 120);
+    });
+  </script>
+</body>
+</html>
