@@ -7,12 +7,13 @@ if (!fs.existsSync(distDir)) fs.mkdirSync(distDir);
 
 console.log('Building thinking-orbs-colored with verified color engine...');
 
-const tempDir = path.join(__dirname, 'temp-build');
-if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
-
-execSync('npm init -y && npm install thinking-orbs react react-dom esbuild', { cwd: tempDir, stdio: 'ignore' });
-
-fs.copyFileSync(path.join(__dirname, 'entry.js'), path.join(tempDir, 'entry.js'));
+// We will patch the files directly in the local node_modules
+// This avoids running npm install during the build process, which fixes Vercel deployment timeouts.
+const pkgDir = path.join(__dirname, 'node_modules', 'thinking-orbs');
+if (!fs.existsSync(pkgDir)) {
+  console.error('ERROR: thinking-orbs not found in node_modules. Run npm install first.');
+  process.exit(1);
+}
 
 // ── The exact draw function from thinking-orbs v* source ──
 const ORIGINAL_DRAW = `function _(e, n, s, r = 0.3) {
@@ -165,8 +166,8 @@ function patchFile(file) {
   fs.writeFileSync(file, content, 'utf8');
 }
 
-const esFile  = path.join(tempDir, 'node_modules/thinking-orbs/dist/index.es.js');
-const cjsFile = path.join(tempDir, 'node_modules/thinking-orbs/dist/index.cjs');
+const esFile  = path.join(pkgDir, 'dist/index.es.js');
+const cjsFile = path.join(pkgDir, 'dist/index.cjs');
 
 console.log('\nPatching ES module...');
 patchFile(esFile);
@@ -177,7 +178,8 @@ fs.copyFileSync(esFile,  path.join(distDir, 'index.es.js'));
 fs.copyFileSync(cjsFile, path.join(distDir, 'index.cjs'));
 
 console.log('\nBundling browser build...');
-execSync('./node_modules/.bin/esbuild entry.js --bundle --minify --outfile=../dist/thinking-orb-bundle.js --platform=browser', { cwd: tempDir, stdio: 'inherit' });
+// Run esbuild locally from the package root
+execSync('./node_modules/.bin/esbuild entry.js --bundle --minify --outfile=dist/thinking-orb-bundle.js --platform=browser', { cwd: __dirname, stdio: 'inherit' });
 
 // Copy to TeleVault backend static
 const backendStatic = path.join(__dirname, '../backend/app/static/thinking-orb-bundle.js');
@@ -216,5 +218,4 @@ declare global {
 }`;
 fs.writeFileSync(path.join(distDir, 'index.d.ts'), dtsContent, 'utf8');
 
-fs.rmSync(tempDir, { recursive: true, force: true });
 console.log('\n✅ Build completed with verified color switching!\n');
