@@ -1,84 +1,86 @@
-# thinking-orbs
+# thinking-orbs-colored
 
-Dotted thought-orb loading indicators for AI & agent UIs. Six hand-tuned animated states, each shipped at two purpose-tuned sizes, rendered on a plain 2D canvas — no WebGL, no filters, works identically in Chrome, Safari and Firefox.
+> Animated 3D canvas thinking orbs for AI agents with **full color customization** support!
 
-[Live demo](https://orbs.jakubantalik.com) · [Repository](https://github.com/Jakubantalik/thinking-orbs) · [Report an issue](https://github.com/Jakubantalik/thinking-orbs/issues)
+[![npm version](https://img.shields.io/npm/v/thinking-orbs-colored.svg)](https://www.npmjs.com/package/thinking-orbs-colored)
 
-## Install
+An enhanced, color-aware version of [`thinking-orbs`](https://github.com/Jakubantalik/thinking-orbs). Supports native color customization via HEX, RGB, HSL, or preset names while preserving full 3D particle depth, shading, and lighting animations.
+
+---
+
+## ✨ What's New in This Fork
+
+1. **Color Engine Injection**: We successfully injected a dynamic RGB color engine into the minified WebGL context to perfectly preserve orb depth and shading.
+2. **Dynamic React Props**: The `color` prop is fully threaded through the render tree so you can dynamically switch colors at runtime in React without unmounting.
+3. **Interactive Palette**: Built-in parsers let you pass any HEX string, named color, RGB, or HSL value directly to the component.
+4. **Light Mode UI**: The demo site includes a clean new visual playground to test real-time color syncing.
+
+---
+
+## 📦 Installation
 
 ```bash
-npm install thinking-orbs
+npm install thinking-orbs-colored react react-dom
 ```
 
-## Quick start
+---
 
-```tsx
-import { ThinkingOrb } from 'thinking-orbs';
+## 🚀 Quick Start
+
+### React
+
+```jsx
+import { ThinkingOrb } from 'thinking-orbs-colored';
 
 function Status() {
-  return <ThinkingOrb state="searching" size={64} />;
+  return (
+    <ThinkingOrb 
+      state="composing" 
+      size={64} 
+      color="#4f46e5" 
+      theme="light" 
+    />
+  );
 }
 ```
 
-## States
+### Vanilla JS / Script Tag
 
-Six verbs an agent can be doing, each a distinct animation:
+```html
+<div id="orb-container"></div>
 
-```tsx
-<ThinkingOrb state="working" />    {/* particles on tilted orbits */}
-<ThinkingOrb state="searching" />  {/* a scan meridian sweeps a dotted globe */}
-<ThinkingOrb state="solving" />    {/* bands scramble, then click back solved */}
-<ThinkingOrb state="listening" />  {/* a waveform rolls through the rings */}
-<ThinkingOrb state="composing" />  {/* an undulating multi-band sash */}
-<ThinkingOrb state="shaping" />    {/* dotted outline: circle → triangle → square */}
+<script src="path/to/thinking-orb-bundle.js"></script>
+<script>
+  window.renderThinkingOrb('orb-container', 'composing', 64, 'light', 'purple');
+</script>
 ```
 
-## Sizes
+---
 
-Two tuned presets — separate designs, not a scale factor. `64` for chat-avatar scale, `20` for inline-text scale. Each carries its own dot count, dot size and speed tuning:
+## 🎨 Color Features & Presets
 
-```tsx
-<ThinkingOrb state="working" size={64} />
-<ThinkingOrb state="working" size={20} />
-```
+You can pass any of the following to the `color` prop:
 
-## Theme
+| Type | Examples | Description |
+| :--- | :--- | :--- |
+| **Named Presets** | `"purple"`, `"emerald"`, `"indigo"`, `"blue"`, `"cyan"`, `"amber"`, `"rose"`, `"violet"` | Vibrant pre-tuned brand colors |
+| **HEX Codes** | `"#4f46e5"`, `"#10b981"`, `"#ef4444"`, `"#f59e0b"` | Any standard 3-digit or 6-digit hex string |
+| **HSL Strings** | `"hsl(243, 75%, 50%)"` | Direct HSL control |
+| **RGB Strings** | `"rgb(79, 70, 229)"` | Standard RGB format |
+| **Monochrome** | `"monochrome"`, `"grayscale"` | Standard black & white orb |
 
-Strictly monochrome — light ink for dark backgrounds, dark ink for light backgrounds — with the mode picked automatically from the host project:
+---
 
-```tsx
-<ThinkingOrb theme="auto" />   {/* default — detects from the project */}
-<ThinkingOrb theme="dark" />   {/* pin: light dots for dark backgrounds */}
-<ThinkingOrb theme="light" />  {/* pin: dark dots for light backgrounds */}
-```
+## ⚙️ Props & API
 
-`auto` resolves in three layers and updates live when any of them change:
+| Prop | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `state` | `"working"` \| `"searching"` \| `"solving"` \| `"listening"` \| `"composing"` \| `"shaping"` | `"working"` | Animation verb |
+| `size` | `64` \| `20` | `64` | tuned scale preset (`64` for avatar scale, `20` for inline) |
+| `color` | `string` | `"purple"` | Color hex, preset, HSL, or RGB string |
+| `theme` | `"auto"` \| `"dark"` \| `"light"` | `"auto"` | Canvas background contrast theme |
+| `speed` | `number` | `1` | Animation speed multiplier |
+| `paused` | `boolean` | `false` | Pause or resume animation |
 
-1. an ancestor `data-theme="dark|light"` attribute or `dark`/`light` class (the Tailwind / shadcn convention), watched via `MutationObserver`;
-2. otherwise `prefers-color-scheme`, subscribed for live OS theme switches;
-3. SSR-safe — the canvas paints only on the client, after the theme has resolved.
+---
 
-## Other props
-
-```tsx
-<ThinkingOrb
-  state="solving"
-  size={20}
-  speed={1.5}          // multiplier on the preset's baked speed
-  paused={false}       // freeze on the current frame
-  aria-label="Analysing repository…"  // overrides the per-state default
-/>
-```
-
-All other `<canvas>` props (`className`, `style`, `data-*`, …) pass through.
-
-## Accessibility & performance
-
-- `role="img"` with a sensible per-state `aria-label` out of the box.
-- `prefers-reduced-motion: reduce` renders a static representative frame — no animation — and still follows the live theme.
-- Every instance pauses automatically when scrolled offscreen (`IntersectionObserver`) or when the tab is hidden, and resumes in phase — all instances share one clock.
-- Plain 2D canvas arcs only: no `ctx.filter`, no SVG filters, no WebGL — the same pixels everywhere, cheap on low-end devices. Device-pixel-ratio capped at 2.
-
-## License
-
-MIT © Jakub Antalik
